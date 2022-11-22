@@ -19,7 +19,6 @@ class GameState:
         self.moveLog.append(move)    # log the move so we can undo it later
         self.whiteToMove = not self.whiteToMove  # changing turn
 
-
     '''
     Undo the Last Move
     '''
@@ -30,6 +29,37 @@ class GameState:
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteToMove = not self.whiteToMove
 
+    '''
+    Considering moves with checks in get_valid_moves()
+    '''
+    def getValidMoves(self):
+        return self.getAllPossibleMoves()
+
+    def getAllPossibleMoves(self):
+        moves = [Move((6, 4), (4, 4), self.board)]
+        for r in range(len(self.board)):
+            for c in range(len(self.board[r])):
+                turn = self.board[r][c][0]
+                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):
+                    piece = self.board[r][c][1]
+                    if piece == 'p':
+                        self.getPawnMoves(r, c, moves)
+                    elif piece == 'R':
+                        self.getRookMoves(r, c, moves)
+        
+        return moves
+    
+    '''
+    Lets get all the pawn moves for pawn located at (r,c) and add these moves to the list 
+    '''
+    def getPawnMoves(self, r, c, moves):
+        pass
+
+    '''
+    Now Lets get all the Rook moves for Rook located at (r,c) and add these moves to the list 
+    '''
+    def getRookMoves(self, r, c, moves):
+        pass
 class Move():
 
     ranksToRows = {'1': 7, '2': 6, '3': 5, '4': 4, '5': 3, '6': 2, '7': 1, '8': 0}
@@ -44,7 +74,16 @@ class Move():
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]   # it may or may  not be a captured piece 
+        self.moveId = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol    #  kind of custom hash function      
+    '''
+    Overridding the equals method
+    '''
     
+    def __eq__(self, other):
+        if isinstance(other, Move):
+            return self.moveId == other.moveId
+        return False
+        
     def getChessNotation(self):
         return self.getRankFile(self.startRow, self.startCol) + self.getRankFile(self.endRow, self.endCol)
 
