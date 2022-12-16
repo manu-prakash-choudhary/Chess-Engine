@@ -6,7 +6,7 @@ class GameState:
                       ["--", "--", "--", "--", "--", "--", "--", "--"],
                       ["--", "--", "--", "--", "--", "--", "--", "--"],
                       ["--", "--", "--", "--", "--", "--", "--", "--"],
-                      ["--", "--", "--", "--", "--", "--", "--", "--"],
+                      ["--", "--", "--", "bp", "--", "--", "--", "--"],
                       ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
                       ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
                       ]
@@ -36,7 +36,7 @@ class GameState:
         return self.getAllPossibleMoves()
 
     def getAllPossibleMoves(self):
-        moves = [Move((6, 4), (4, 4), self.board)]
+        moves = []
         for r in range(len(self.board)):
             for c in range(len(self.board[r])):
                 turn = self.board[r][c][0]
@@ -53,10 +53,22 @@ class GameState:
     Lets get all the pawn moves for pawn located at (r,c) and add these moves to the list 
     '''
     def getPawnMoves(self, r, c, moves):
-        pass
-
+        if self.whiteToMove:  # valid white pawn moves
+            if self.board[r - 1][c] == '--':  # 1 Square advance available
+                moves.append(Move((r, c), (r - 1, c), self.board))
+                if r == 6 and self.board[r - 2][c] == '--':
+                    moves.append(Move((r, c), (r - 2, c), self.board))
+                # print(c, r)
+                if c - 1 >= 0:  # look for possible capture to left
+                    if self.board[r - 1][c - 1][0] == 'b':  # enemy piece to capture
+                        moves.append(Move((r, c), (r - 1, c - 1), self.board))
+                if c + 1 <= 7:  # look for possible capture to right
+                    print('insdie right', r, c)
+                    if self.board[r-1][c + 1][0] == 'b':  # enemy piece to capture
+                        print("appended to valid moves")
+                        moves.append(Move((r, c), (r - 1, c + 1), self.board))
     '''
-    Now Lets get all the Rook moves for Rook located at (r,c) and add these moves to the list 
+    Now Lets get all the Rook moves for Rook located at (r,c) and add these moves to the list
     '''
     def getRookMoves(self, r, c, moves):
         pass
@@ -73,8 +85,9 @@ class Move():
         self.endRow = endSq[0]
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
-        self.pieceCaptured = board[self.endRow][self.endCol]   # it may or may  not be a captured piece 
-        self.moveId = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol    #  kind of custom hash function      
+        self.pieceCaptured = board[self.endRow][self.endCol]   # it may or may  not be a captured piece
+        self.moveId = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol    #  kind of custom hash function
+        # print(self.moveId)
     '''
     Overridding the equals method
     '''
