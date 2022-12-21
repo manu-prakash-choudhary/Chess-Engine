@@ -6,10 +6,11 @@ class GameState:
                       ["--", "--", "--", "--", "--", "--", "--", "--"],
                       ["--", "--", "--", "--", "--", "--", "--", "--"],
                       ["--", "--", "--", "--", "--", "--", "--", "--"],
-                      ["--", "--", "--", "bp", "--", "--", "--", "--"],
+                      ["--", "--", "--", "--", "--", "--", "--", "--"],
                       ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
                       ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
                       ]
+        self.moveFunctions = {'p': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getKnightMoves, 'B': self.getBishopMoves, 'K': self.getKingMoves, 'Q': self.getQueenMoves, }
         self.whiteToMove = True
         self.moveLog = []
 
@@ -42,10 +43,8 @@ class GameState:
                 turn = self.board[r][c][0]
                 if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):
                     piece = self.board[r][c][1]
-                    if piece == 'p':
-                        self.getPawnMoves(r, c, moves)
-                    elif piece == 'R':
-                        self.getRookMoves(r, c, moves)
+                    self.moveFunctions[piece](r, c, moves)  # getting valid moves as per the piece selected
+                    
         
         return moves
     
@@ -59,19 +58,109 @@ class GameState:
                 if r == 6 and self.board[r - 2][c] == '--':
                     moves.append(Move((r, c), (r - 2, c), self.board))
                 # print(c, r)
-                if c - 1 >= 0:  # look for possible capture to left
-                    if self.board[r - 1][c - 1][0] == 'b':  # enemy piece to capture
-                        moves.append(Move((r, c), (r - 1, c - 1), self.board))
-                if c + 1 <= 7:  # look for possible capture to right
-                    print('insdie right', r, c)
-                    if self.board[r-1][c + 1][0] == 'b':  # enemy piece to capture
-                        print("appended to valid moves")
-                        moves.append(Move((r, c), (r - 1, c + 1), self.board))
+            if c - 1 >= 0:  # look for possible capture to left
+                if self.board[r - 1][c - 1][0] == 'b':  # enemy piece to capture
+                    moves.append(Move((r, c), (r - 1, c - 1), self.board))
+            if c + 1 <= 7:  # look for possible capture to right
+                print('insdie right', r, c)
+                if self.board[r-1][c + 1][0] == 'b':  # enemy piece to capture
+                    moves.append(Move((r, c), (r - 1, c + 1), self.board))
+        else:  # getting black pawn moves
+            if self.board[r + 1][c] == '--':  # 1 Square advance available
+                moves.append(Move((r, c), (r + 1, c), self.board))
+                if r == 1 and self.board[r + 2][c] == '--':
+                    moves.append(Move((r, c), (r + 2, c), self.board))
+                
+            #  captures available
+            if c - 1 >= 0:  # look for possible capture to left
+                if self.board[r + 1][c - 1][0] == 'w':  # enemy piece to capture
+                    moves.append(Move((r, c), (r + 1, c - 1), self.board))
+            if c + 1 <= 7:  # look for possible capture to right
+                print('insdie right', r, c)
+                if self.board[r + 1][c + 1][0] == 'w':  # enemy piece to capture
+                    moves.append(Move((r, c), (r + 1, c + 1), self.board))
+        #add promotion rules later
+
+
     '''
     Now Lets get all the Rook moves for Rook located at (r,c) and add these moves to the list
     '''
     def getRookMoves(self, r, c, moves):
-        pass
+        directions = ((-1, 0), (0, -1), (1, 0), (0, 1))    # up, left, down, right
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        for d in directions:
+            for i in range(1, 8):
+                endRow = r + d[0] * i
+                endCol = c + d[1] * i
+                if 0 <= endRow < 8 and 0 <= endCol < 8:
+                    endPiece = self.board[endRow][endCol]
+                    if endPiece == '--':  # square is empty
+                        moves.append(Move((r, c),(endRow, endCol), self.board))
+                    elif endPiece[0] == enemyColor:  # valid till enemy is found, no more possibility after that.
+                        moves.append(Move((r, c),(endRow, endCol), self.board))
+                        break
+                    else:   # friendly piece blocking the path
+                        break
+                else:     # offboard
+                    break
+
+    '''
+    Now Lets get all the Knight moves for Knight located at (r,c) and add these moves to the list
+    '''
+    def getKnightMoves(self, r, c, moves):
+        knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
+        allyColor = 'w' if self.whiteToMove else 'b'
+        for m in knightMoves:
+            endRow = r + m[0]
+            endCol = r + m[1]
+            if 0 <= endRow < 8 and 0 <= endCol < 8:
+                endPiece = self.board[endRow][endCol]
+                if endPiece[0] != allyColor:  # not an ally piece its either empty or enemy valid in both cases
+                    moves.append(Move((r, c), (endRow, endCol), self.board))
+
+    '''
+    Now Lets get all the Bishop moves for Bishop located at (r,c) and add these moves to the list
+    '''
+    def getBishopMoves(self, r, c, moves):
+        directions = ((-1, -1), (-1, 1), (1, -1), (1, 1))
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        for d in directions:
+            for i in range(1, 8):
+                endRow = r + d[0] * i
+                endCol = c + d[1] * i
+                if 0 <= endRow < 8 and 0 <= endCol < 8:
+                    endPiece = self.board[endRow][endCol]
+                    if endPiece == '--':  # square is empty
+                        moves.append(Move((r, c),(endRow, endCol), self.board))
+                    elif endPiece[0] == enemyColor:  # valid till enemy is found, no more possibility after that.
+                        moves.append(Move((r, c),(endRow, endCol), self.board))
+                        break
+                    else:   # friendly piece blocking the path
+                        break
+                else:     # offboard
+                    break
+
+    '''
+    Now Lets get all the Queen moves for Queen located at (r,c) and add these moves to the list
+    '''
+    def getQueenMoves(self, r, c, moves):
+        self.getRookMoves(r, c, moves)
+        self.getBishopMoves(r, c, moves)
+
+    '''
+    Now Lets get all the King moves for King located at (r,c) and add these moves to the list
+    '''
+    def getKingMoves(self, r, c, moves):
+        kingMoves = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1),)
+        allyColor = 'w' if self.whiteToMove else 'b'
+        for m in kingMoves:
+            endRow = r + m[0]
+            endCol = r + m[1]
+            if 0 <= endRow < 8 and 0 <= endCol < 8:
+                endPiece = self.board[endRow][endCol]
+                if endPiece[0] != allyColor:  # not an ally piece its either empty or enemy valid in both cases
+                    moves.append(Move((r, c), (endRow, endCol), self.board))
+    
 class Move():
 
     ranksToRows = {'1': 7, '2': 6, '3': 5, '4': 4, '5': 3, '6': 2, '7': 1, '8': 0}
